@@ -1,3 +1,2 @@
-websocket-client
 pygame
-requests
+numpy

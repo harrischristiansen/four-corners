@@ -142,7 +142,7 @@ class Board(object):
 	def _canPlaceTile(self, piece, x, y):
 		if not self._isValidPosition(x, y) or self._board[y][x] != None:
 			return False
-		for neighbors in self._tile_neighbors(x, y):
+		for neighbor in self._tile_neighbors(x, y):
 			if neighbor.player == piece.player:
 				return False
 		return True

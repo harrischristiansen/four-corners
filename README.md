@@ -1,5 +1,7 @@
 # Four Corners
 
+![Four Corners Gameplay Image](http://files.harrischristiansen.com/3F013r1w3K0S/four_corners.png "Four Corners Gameplay Image")
+
 ## Synopsis
 
 Four Corners is a game where four players strategically place game pieces on the board, corner to corner. The last player to place a game piece wins!  
@@ -15,9 +17,9 @@ Four Corners is a game where four players strategically place game pieces on the
 
 ## Features
 
-- [ ] Game Viewer
-- [ ] Game Logic
-- [ ] Move Controls
+- [X] Game Viewer
+- [X] Game/Player/Turn Logic
+- [X] Board Object
 
 ## Contributors
 
