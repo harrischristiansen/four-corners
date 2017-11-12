@@ -162,12 +162,12 @@ class FourCornersViewer(object):
 	def _drawPiece(self, piece, color, pos_left, pos_top, width):
 		tile_width = (width - 2) / piece.width
 		tile_height = (PIECES_ROW_HEIGHT - 10) / piece.height
-		tile_width = min(min(tile_width, tile_height), MAX_TILE_SIZE)
-		tile_height = min(min(tile_width, tile_height), MAX_TILE_SIZE)
+		tile_height = min(min(tile_height, tile_width), (PIECES_ROW_HEIGHT-5)/2/piece.height)
+		tile_width = min(tile_width, tile_height)
 		for y in range(piece.height):
 			for x in range(piece.width):
 				if piece.tiles[y][x] == 1:
-					pygame.draw.rect(self._screen, color, [pos_left+1+(tile_width*x), pos_top+5+(tile_height*y), tile_width-2, tile_height-2])
+					pygame.draw.rect(self._screen, color, [pos_left+1+(tile_width*x), pos_top+2+(tile_height*y), tile_width-2, tile_height-2])
 
 	def _drawGrid(self):
 		for row in range(self._board.rows):
