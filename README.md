@@ -1,6 +1,6 @@
 # Four Corners
 
-![Four Corners Gameplay Image](http://files.harrischristiansen.com/3F013r1w3K0S/four_corners.png "Four Corners Gameplay Image")
+![Four Corners Gameplay Image](http://files.harrischristiansen.com/3k2E2i1W0u0J/four_corners_sm.png "Four Corners Gameplay Image")
 
 ## Synopsis
 
