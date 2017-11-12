@@ -35,6 +35,9 @@ class Board(object):
 	@property
 	def board(self):
 		return self._board
+	@property
+	def availablePieces(self):
+		return[]
 
 	################################ Board Setup ################################
 
