@@ -4,7 +4,7 @@
 	Pieces: Definition of all game pieces
 '''
 
-from basePiece import BasePiece
+from .basePiece import BasePiece
 
 class Single(BasePiece):
 	def __init__(self, player):

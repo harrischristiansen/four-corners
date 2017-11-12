@@ -10,12 +10,15 @@ BOARD_HEIGHT = 20
 DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 CORNER_DIRECTIONS = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
 
-import pieces
+from . import pieces
+
+import logging
 
 class Board(object):
 	def __init__(self, players):
 		self._players = players
 		self._player_count = len(players)
+		self._current_player = self._players[0]
 
 		self._rows = BOARD_HEIGHT
 		self._cols = BOARD_WIDTH
@@ -36,8 +39,11 @@ class Board(object):
 	def board(self):
 		return self._board
 	@property
+	def currentPlayer(self):
+		return self._current_player
+	@property
 	def availablePieces(self):
-		return[]
+		return self._current_player.available_pieces
 
 	################################ Board Setup ################################
 
@@ -72,39 +78,31 @@ class Board(object):
 	################################ Move Making ################################
 
 	def placePiece(self, piece, top_left_x, top_left_y):
-		return self._assignPiece(piece, top_left_x, top_left_y)
+		if piece == None or not self._isValidPosition(top_left_x, top_left_y):
+			return False
 
-	def _canPlacePiece(self, piece, top_left_x, top_left_y):
-		touchesCorner = False
-		for y in piece.height:
-			for x in piece.width:
-				if piece.tiles[y][x] == 1:
-					if self._doesTouchCorner(piece, top_left_x+x, top_left_y+y):
-						touchesCorner = True
-					if not self._canPlaceTile(piece, top_left_x+x, top_left_y+y):
-						return False
-		return touchesCorner
-
-	def _doesTouchCorner(self, piece, x, y):
-		for corner in self._tile_corners(x, y):
-			if corner.player == piece.player:
-				return True
+		if self._assignPiece(piece, top_left_x, top_left_y):
+			self._next_player()
+			return True
 		return False
 
-	def _canPlaceTile(self, piece, x, y):
-		if self._board[y][x] != None:
-			return False
-		for neighbors in self._tile_neighbors(x, y):
-			if neighbor.player == piece.player:
-				return False
-		return True
+	def _next_player(self):
+		if self._current_player not in self._players:
+			self._current_player = self._players[0]
+			return
+
+		# Update self._current_player to next player
+		index = self._players.index(self._current_player)
+		next_index = (index + 1) % self._player_count
+		self._current_player = self._players[next_index]
 
 	def _assignPiece(self, piece, top_left_x, top_left_y):
 		if not self._canPlacePiece(piece, top_left_x, top_left_y):
 			return False
+		piece.player.available_pieces.remove(piece)
 
-		for y in piece.height:
-			for x in piece.width:
+		for y in range(piece.height):
+			for x in range(piece.width):
 				if piece.tiles[y][x] == 1:
 					self._assignTile(piece, top_left_x+x, top_left_y+y)
 
@@ -115,6 +113,39 @@ class Board(object):
 			self._board[y][x] = piece
 			return True
 		raise ValueError("Error: Tile already assigned during call to _assignTile")
+
+	################################ Move Validation ################################
+
+	def _canPlacePiece(self, piece, top_left_x, top_left_y):
+		if not piece in piece.player.available_pieces:
+			return False
+
+		touchesCorner = False
+		for y in range(piece.height):
+			for x in range(piece.width):
+				if piece.tiles[y][x] == 1:
+					if self._doesTouchCorner(piece, top_left_x+x, top_left_y+y):
+						touchesCorner = True
+					if not self._canPlaceTile(piece, top_left_x+x, top_left_y+y):
+						return False
+		return touchesCorner
+
+	def _doesTouchCorner(self, piece, x, y):
+		if (x == 0 or x == self.cols-1) and (y == 0 or y == self.rows-1):
+			return True
+
+		for corner in self._tile_corners(x, y):
+			if corner.player == piece.player:
+				return True
+		return False
+
+	def _canPlaceTile(self, piece, x, y):
+		if not self._isValidPosition(x, y) or self._board[y][x] != None:
+			return False
+		for neighbors in self._tile_neighbors(x, y):
+			if neighbor.player == piece.player:
+				return False
+		return True
 
 	################################ Tile Selection ################################
 
