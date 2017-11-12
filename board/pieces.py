@@ -96,7 +96,7 @@ class Five_L(BasePiece):
 	def __init__(self, player):
 		tiles = [
 			[1, 1, 1, 1],
-			[1, 1, 0, 0],
+			[1, 0, 0, 0],
 		]
 		super().__init__("five L", player, tiles=tiles)
 
@@ -140,7 +140,7 @@ class Five_Angle(BasePiece):
 		tiles = [
 			[1, 0, 0],
 			[1, 0, 0],
-			[1, 1, 0],
+			[1, 1, 1],
 		]
 		super().__init__("five angle", player, tiles=tiles)
 

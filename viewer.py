@@ -24,6 +24,7 @@ PIECES_ROW_HEIGHT = 80
 ACTIONBAR_ROW_HEIGHT = 25
 ACTION_BTN_WIDTH = 120
 ABOVE_GRID_HEIGHT = ACTIONBAR_ROW_HEIGHT
+MAX_TILE_SIZE = 12
 
 class FourCornersViewer(object):
 	def __init__(self, name=None, moveEvent=None):
@@ -95,17 +96,24 @@ class FourCornersViewer(object):
 			elif pos[0] < 2*ACTION_BTN_WIDTH: # Rotate Right
 				for piece in self._board.availablePieces:
 					piece.rotate(-1)
+			elif pos[0] < 3*ACTION_BTN_WIDTH: # Flip
+				for piece in self._board.availablePieces:
+					piece.flip()
 			self._receivedUpdate = True
 		elif pos[1] > ABOVE_GRID_HEIGHT and pos[1] < self._window_size[1] - PIECES_ROW_HEIGHT: # Click inside Grid
 			column = pos[0] // (CELL_WIDTH + CELL_MARGIN)
 			row = (pos[1] - ABOVE_GRID_HEIGHT) // (CELL_HEIGHT + CELL_MARGIN)
 			self._moveEvent(self.selected_piece, column, row)
 			logging.debug("Click %s @ grid coordinates: %d, %d" % (pos, column, row))
-		elif pos[1] >= self._window_size[1] - PIECES_ROW_HEIGHT:
+		elif pos[1] >= self._window_size[1] - PIECES_ROW_HEIGHT: # Select Piece
 			pieces = self._board.availablePieces
-			piece_width = self._window_size[0] / len(pieces)
-			piece_index = int(pos[0] / piece_width)
+			pieces_per_row = int(len(pieces) / 2)
+			piece_width = self._window_size[0] / pieces_per_row
+			piece_offset = int(pos[0] / piece_width)
+			piece_row = 1 if pos[1] >= self._window_size[1] - (PIECES_ROW_HEIGHT/2) else 0
+			piece_index = (piece_row*(pieces_per_row+1)) + piece_offset
 			piece = pieces[piece_index]
+			logging.debug("Selected piece %s" % piece)
 			self.selected_piece = piece
 
 	''' ======================== Viewer Drawing ======================== '''
@@ -121,12 +129,16 @@ class FourCornersViewer(object):
 
 	def _drawActionbar(self):
 		# Rotate Left Button
-		pygame.draw.rect(self._screen, (0,80,0), [0, 0, ACTION_BTN_WIDTH, ACTIONBAR_ROW_HEIGHT])
+		pygame.draw.rect(self._screen, PLAYER_COLORS[4], [0, 0, ACTION_BTN_WIDTH, ACTIONBAR_ROW_HEIGHT])
 		self._screen.blit(self._font.render("Rotate CC", True, WHITE), (10, 5))
 
 		# Rotate Right Button
-		pygame.draw.rect(self._screen, (0,ACTION_BTN_WIDTH+10,0), [ACTION_BTN_WIDTH, 0, ACTION_BTN_WIDTH, ACTIONBAR_ROW_HEIGHT])
+		pygame.draw.rect(self._screen, PLAYER_COLORS[5], [ACTION_BTN_WIDTH, 0, ACTION_BTN_WIDTH, ACTIONBAR_ROW_HEIGHT])
 		self._screen.blit(self._font.render("Rotate Clockwise", True, WHITE), (ACTION_BTN_WIDTH+10, 5))
+
+		# Flip Button
+		pygame.draw.rect(self._screen, PLAYER_COLORS[3], [ACTION_BTN_WIDTH*2, 0, ACTION_BTN_WIDTH, ACTIONBAR_ROW_HEIGHT])
+		self._screen.blit(self._font.render("Flip", True, WHITE), (ACTION_BTN_WIDTH*2+10, 5))
 
 	def _drawAvailablePieces(self):
 		pos_top = self._window_size[1] - PIECES_ROW_HEIGHT
@@ -138,20 +150,24 @@ class FourCornersViewer(object):
 		if pieces[0].player.isDead:
 			color = GRAY_DARK
 
-		piece_width = self._window_size[0] / len(pieces)
+		pieces_per_row = int(len(pieces) / 2)
+		piece_width = self._window_size[0] / pieces_per_row
 		for i, piece in enumerate(pieces):
-			self._drawPiece(piece, color, piece_width * i, self._window_size[1] - PIECES_ROW_HEIGHT, piece_width)
-			color = fadeToWhite(color)
+			pos_top = self._window_size[1] - PIECES_ROW_HEIGHT
+			if i > pieces_per_row:
+				pos_top += PIECES_ROW_HEIGHT/2
+			self._drawPiece(piece, color, piece_width * (i % (pieces_per_row+1)), pos_top, piece_width)
+			color = fadeColor(color, 50 if i%2==0 else -50)
 
 	def _drawPiece(self, piece, color, pos_left, pos_top, width):
 		tile_width = (width - 2) / piece.width
 		tile_height = (PIECES_ROW_HEIGHT - 10) / piece.height
-		tile_width = min(tile_width, tile_height)
-		tile_height = min(tile_width, tile_height)
+		tile_width = min(min(tile_width, tile_height), MAX_TILE_SIZE)
+		tile_height = min(min(tile_width, tile_height), MAX_TILE_SIZE)
 		for y in range(piece.height):
 			for x in range(piece.width):
 				if piece.tiles[y][x] == 1:
-					pygame.draw.rect(self._screen, color, [pos_left+1+(tile_width*x), pos_top+10+(tile_height*y), tile_width-2, tile_height-2])
+					pygame.draw.rect(self._screen, color, [pos_left+1+(tile_width*x), pos_top+5+(tile_height*y), tile_width-2, tile_height-2])
 
 	def _drawGrid(self):
 		for row in range(self._board.rows):
@@ -170,8 +186,7 @@ class FourCornersViewer(object):
 
 ''' ======================== Color Manipulation ======================== '''
 
-def fadeToWhite(color):
-	increaseBy = 5
+def fadeColor(color, increaseBy=5):
 	return (color[0]+increaseBy if color[0]+increaseBy < 255 else 255,
 		color[1]+increaseBy if color[1]+increaseBy < 255 else 255,
 		color[2]+increaseBy if color[2]+increaseBy < 255 else 255)

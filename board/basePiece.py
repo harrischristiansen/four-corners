@@ -41,3 +41,6 @@ class BasePiece(object):
 
 	def rotate(self, direction=1):
 		self._rotation = (self._rotation + direction) % 4
+
+	def flip(self):
+		self._tiles = np.flip(self._tiles, (self._rotation + 1) % 2)
