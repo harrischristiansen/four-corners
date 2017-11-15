@@ -78,7 +78,7 @@ class Board(object):
 	################################ Move Making ################################
 
 	def placePiece(self, piece, top_left_x, top_left_y):
-		if piece == None or not self._isValidPosition(top_left_x, top_left_y):
+		if piece == None or not self.isValidPosition(top_left_x, top_left_y):
 			return False
 
 		if self._assignPiece(piece, top_left_x, top_left_y):
@@ -140,7 +140,7 @@ class Board(object):
 		return False
 
 	def _canPlaceTile(self, piece, x, y):
-		if not self._isValidPosition(x, y) or self._board[y][x] != None:
+		if not self.isValidPosition(x, y) or self._board[y][x] != None:
 			return False
 		for neighbor in self._tile_neighbors(x, y):
 			if neighbor.player == piece.player:
@@ -152,7 +152,7 @@ class Board(object):
 	def _tile_neighbors(self, x, y):
 		neighbors = []
 		for dy, dx in DIRECTIONS:
-			if self._isValidPosition(x+dx, y+dy):
+			if self.isValidPosition(x+dx, y+dy):
 				if self._board[y+dy][x+dx] != None:
 					neighbors.append(self._board[y+dy][x+dx])
 		return neighbors
@@ -160,12 +160,12 @@ class Board(object):
 	def _tile_corners(self, x, y):
 		corners = []
 		for dy, dx in CORNER_DIRECTIONS:
-			if self._isValidPosition(x+dx, y+dy):
+			if self.isValidPosition(x+dx, y+dy):
 				if self._board[y+dy][x+dx] != None:
 					corners.append(self._board[y+dy][x+dx])
 		return corners
 
-	def _isValidPosition(self, x, y):
+	def isValidPosition(self, x, y):
 		return 0 <= y < self._rows and 0 <= x < self._cols
 
 

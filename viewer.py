@@ -34,7 +34,7 @@ class FourCornersViewer(object):
 		self._name = name
 		self._moveEvent = moveEvent
 		self._receivedUpdate = False
-		self._showGrid = True
+		self._clearSelectedPiece()
 
 	def mainViewerLoop(self):
 		while not self._receivedUpdate: # Wait for first update
@@ -48,12 +48,14 @@ class FourCornersViewer(object):
 					self._runPygame = False # Flag done
 				elif event.type == pygame.MOUSEBUTTONDOWN: # Mouse Click
 					self._handleClick(pygame.mouse.get_pos())
+				elif event.type == pygame.MOUSEMOTION: # Mouse Hover
+					self._handleHover(pygame.mouse.get_pos())
 
 			if self._receivedUpdate:
 				self._drawViewer()
 				self._receivedUpdate = False
 
-			time.sleep(0.2)
+			time.sleep(0.1)
 
 		pygame.quit() # Done. Quit pygame.
 
@@ -61,6 +63,8 @@ class FourCornersViewer(object):
 
 	def updateBoard(self, board):
 		self._board = board
+		if self.selected_piece != None and self.selected_piece.player != board.currentPlayer:
+			self._clearSelectedPiece()
 		self._receivedUpdate = True
 		return self
 
@@ -101,10 +105,9 @@ class FourCornersViewer(object):
 					piece.flip()
 			self._receivedUpdate = True
 		elif pos[1] > ABOVE_GRID_HEIGHT and pos[1] < self._window_size[1] - PIECES_ROW_HEIGHT: # Click inside Grid
-			column = pos[0] // (CELL_WIDTH + CELL_MARGIN)
-			row = (pos[1] - ABOVE_GRID_HEIGHT) // (CELL_HEIGHT + CELL_MARGIN)
-			self._moveEvent(self.selected_piece, column, row)
-			logging.debug("Click %s @ grid coordinates: %d, %d" % (pos, column, row))
+			grid_pos = self._transMouseToGridPos(pos)
+			self._moveEvent(self.selected_piece, grid_pos[0], grid_pos[1])
+			logging.debug("Click %s @ grid coordinates: %d, %d" % (pos, grid_pos[0], grid_pos[1]))
 		elif pos[1] >= self._window_size[1] - PIECES_ROW_HEIGHT: # Select Piece
 			pieces = self._board.availablePieces
 			pieces_per_row = int(len(pieces) / 2)
@@ -115,6 +118,40 @@ class FourCornersViewer(object):
 			piece = pieces[piece_index]
 			logging.debug("Selected piece %s" % piece)
 			self.selected_piece = piece
+
+	def _transMouseToGridPos(self, pos):
+		if pos[1] >= ABOVE_GRID_HEIGHT and pos[1] <= self._window_size[1] - PIECES_ROW_HEIGHT: # Click inside Grid
+			return (pos[0] // (CELL_WIDTH + CELL_MARGIN), (pos[1] - ABOVE_GRID_HEIGHT) // (CELL_HEIGHT + CELL_MARGIN))
+		return (0,0)
+
+	''' ======================== Handle Hover Preview ======================== '''
+
+	def _handleHover(self, pos):
+		if pos[1] < ABOVE_GRID_HEIGHT or pos[1] > self._window_size[1] - PIECES_ROW_HEIGHT or self.selected_piece == None: # Hover Outside Grid or no selected piece
+			self._hoverTiles = []
+			self._receivedUpdate = True
+			return False
+
+		grid_pos = self._transMouseToGridPos(pos)
+		piece = self.selected_piece
+		if (grid_pos == self._hoverPos):
+			return False
+
+		self._hoverTiles = []
+		for y in range(piece.height):
+			for x in range(piece.width):
+				g_x = grid_pos[0]+x
+				g_y = grid_pos[1]+y
+				if self._board.isValidPosition(g_x, g_y) and piece.tiles[y][x] == 1:
+					self._hoverTiles.append((g_x, g_y))
+
+		self._hoverPos = grid_pos
+		self._receivedUpdate = True
+
+	def _clearSelectedPiece(self):
+		self.selected_piece = None
+		self._hoverPos = None
+		self._hoverTiles = []
 
 	''' ======================== Viewer Drawing ======================== '''
 
@@ -178,6 +215,11 @@ class FourCornersViewer(object):
 				color_font = WHITE
 				if piece != None:
 					color = PLAYER_COLORS[piece.player.index]
+				if (column, row) in self._hoverTiles:
+					if color == WHITE:
+						color = GOLD
+					else:
+						color = GRAY_DARK
 
 				# Draw Rect
 				pos_left = (CELL_MARGIN + CELL_WIDTH) * column + CELL_MARGIN
