@@ -110,11 +110,11 @@ class FourCornersViewer(object):
 			logging.debug("Click %s @ grid coordinates: %d, %d" % (pos, grid_pos[0], grid_pos[1]))
 		elif pos[1] >= self._window_size[1] - PIECES_ROW_HEIGHT: # Select Piece
 			pieces = self._board.availablePieces
-			pieces_per_row = int(len(pieces) / 2)
+			pieces_per_row = int((len(pieces)+1) / 2)
 			piece_width = self._window_size[0] / pieces_per_row
 			piece_offset = int(pos[0] / piece_width)
 			piece_row = 1 if pos[1] >= self._window_size[1] - (PIECES_ROW_HEIGHT/2) else 0
-			piece_index = (piece_row*(pieces_per_row+1)) + piece_offset
+			piece_index = (piece_row*pieces_per_row) + piece_offset
 			piece = pieces[piece_index]
 			logging.debug("Selected piece %s" % piece)
 			self.selected_piece = piece
@@ -197,7 +197,7 @@ class FourCornersViewer(object):
 			else:
 				color = GRAY_DARK
 
-			self._drawPiece(piece, color, piece_width * (i % (pieces_per_row)), pos_top, piece_width)
+			self._drawPiece(piece, color, piece_width * (i % pieces_per_row), pos_top, piece_width)
 			
 
 	def _drawPiece(self, piece, color, pos_left, pos_top, width):
