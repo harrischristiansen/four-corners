@@ -13,7 +13,9 @@ class BasePiece(object):
 		self._tiles = tiles									# self._tiles[y][x] = 0 || 1
 		self._width = len(tiles[0])
 		self._height = len(tiles)
-		self._tile_count = sum(t.count(1) for t in tiles)
+		self._tile_count = len(np.nonzero(tiles))
+
+		self._canPlacePiece = 0
 		self._rotation = 0
 
 	@property
@@ -38,6 +40,30 @@ class BasePiece(object):
 	@property
 	def tile_count(self):
 		return self._tile_count
+
+	def canPlacePiece(self, board):
+
+		if abs(self._canPlacePiece) == board.turn:
+			return self._canPlacePiece > 0
+		self._canPlacePiece = board.turn
+
+		for y in range(board.rows):
+			for x in range(board.cols):
+				if board.board[y][x] == None:
+					tempPiece = BasePiece(self._name+"_temp", self._player, self._tiles)
+					for f in range(3): # Allow placement in any orientation
+						for i in range(4):
+							if board.canPlacePiece(tempPiece, x, y, requireAvaiable=False):
+								return True
+							tempPiece.rotate()
+						if f == 1:
+							tempPiece.rotate()
+						tempPiece.flip()
+
+		self._canPlacePiece = -board.turn
+		return False
+
+	## --------------- Piece Actions --------------- ##
 
 	def rotate(self, direction=1):
 		self._rotation = (self._rotation + direction) % 4

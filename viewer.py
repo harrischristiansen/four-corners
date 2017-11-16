@@ -128,7 +128,7 @@ class FourCornersViewer(object):
 
 	def _handleHover(self, pos):
 		if pos[1] < ABOVE_GRID_HEIGHT or pos[1] > self._window_size[1] - PIECES_ROW_HEIGHT or self.selected_piece == None: # Hover Outside Grid or no selected piece
-			self._hoverTiles = []
+			self._hoverTiles = {}
 			self._receivedUpdate = True
 			return False
 
@@ -137,13 +137,15 @@ class FourCornersViewer(object):
 		if (grid_pos == self._hoverPos):
 			return False
 
-		self._hoverTiles = []
+		can_place = self._board.canPlacePiece(piece, grid_pos[0], grid_pos[1])
+
+		self._hoverTiles = {}
 		for y in range(piece.height):
 			for x in range(piece.width):
 				g_x = grid_pos[0]+x
 				g_y = grid_pos[1]+y
 				if self._board.isValidPosition(g_x, g_y) and piece.tiles[y][x] == 1:
-					self._hoverTiles.append((g_x, g_y))
+					self._hoverTiles[(g_x, g_y)] = can_place
 
 		self._hoverPos = grid_pos
 		self._receivedUpdate = True
@@ -151,7 +153,7 @@ class FourCornersViewer(object):
 	def _clearSelectedPiece(self):
 		self.selected_piece = None
 		self._hoverPos = None
-		self._hoverTiles = []
+		self._hoverTiles = {}
 
 	''' ======================== Viewer Drawing ======================== '''
 
@@ -183,18 +185,20 @@ class FourCornersViewer(object):
 		if len(pieces) == 0:
 			return False
 
-		color = PLAYER_COLORS[pieces[0].player.index]
-		if pieces[0].player.isDead:
-			color = GRAY_DARK
-
-		pieces_per_row = int(len(pieces) / 2)
+		pieces_per_row = int((len(pieces)+1) / 2)
 		piece_width = self._window_size[0] / pieces_per_row
 		for i, piece in enumerate(pieces):
 			pos_top = self._window_size[1] - PIECES_ROW_HEIGHT
-			if i > pieces_per_row:
+			if i >= pieces_per_row:
 				pos_top += PIECES_ROW_HEIGHT/2
-			self._drawPiece(piece, color, piece_width * (i % (pieces_per_row+1)), pos_top, piece_width)
-			color = fadeColor(color, 50 if i%2==0 else -50)
+
+			if piece.canPlacePiece(self._board):
+				color = fadeColor(PLAYER_COLORS[pieces[0].player.index], 40 if i%2==0 else -40)
+			else:
+				color = GRAY_DARK
+
+			self._drawPiece(piece, color, piece_width * (i % (pieces_per_row)), pos_top, piece_width)
+			
 
 	def _drawPiece(self, piece, color, pos_left, pos_top, width):
 		tile_width = (width - 2) / piece.width
@@ -215,9 +219,11 @@ class FourCornersViewer(object):
 				color_font = WHITE
 				if piece != None:
 					color = PLAYER_COLORS[piece.player.index]
+
 				if (column, row) in self._hoverTiles:
+					can_place = self._hoverTiles[(column, row)]
 					if color == WHITE:
-						color = GOLD
+						color = fadeColor(PLAYER_COLORS[self.selected_piece.player.index], -80 if can_place else 80)
 					else:
 						color = GRAY_DARK
 
@@ -229,6 +235,6 @@ class FourCornersViewer(object):
 ''' ======================== Color Manipulation ======================== '''
 
 def fadeColor(color, increaseBy=5):
-	return (color[0]+increaseBy if color[0]+increaseBy < 255 else 255,
-		color[1]+increaseBy if color[1]+increaseBy < 255 else 255,
-		color[2]+increaseBy if color[2]+increaseBy < 255 else 255)
+	return (sorted((0, (color[0]+increaseBy), 255))[1],
+		sorted((0, (color[1]+increaseBy), 255))[1],
+		sorted((0, (color[2]+increaseBy), 255))[1])

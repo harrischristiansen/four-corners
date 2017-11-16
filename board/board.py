@@ -19,6 +19,7 @@ class Board(object):
 		self._players = players
 		self._player_count = len(players)
 		self._current_player = self._players[0]
+		self._turn = 1
 
 		self._rows = BOARD_HEIGHT
 		self._cols = BOARD_WIDTH
@@ -38,6 +39,9 @@ class Board(object):
 	@property
 	def board(self):
 		return self._board
+	@property
+	def turn(self):
+		return self._turn
 	@property
 	def currentPlayer(self):
 		return self._current_player
@@ -91,13 +95,21 @@ class Board(object):
 			self._current_player = self._players[0]
 			return
 
+		# Update turn after each loop of players
+		if self._current_player == self._players[-1]:
+			self._turn += 1
+
 		# Update self._current_player to next player
 		index = self._players.index(self._current_player)
 		next_index = (index + 1) % self._player_count
 		self._current_player = self._players[next_index]
 
+		# Validate player is eligible to play
+		if self._current_player.isDead:
+			return self._next_player()
+
 	def _assignPiece(self, piece, top_left_x, top_left_y):
-		if not self._canPlacePiece(piece, top_left_x, top_left_y):
+		if not self.canPlacePiece(piece, top_left_x, top_left_y):
 			return False
 		piece.player.available_pieces.remove(piece)
 
@@ -116,18 +128,18 @@ class Board(object):
 
 	################################ Move Validation ################################
 
-	def _canPlacePiece(self, piece, top_left_x, top_left_y):
-		if not piece in piece.player.available_pieces:
+	def canPlacePiece(self, piece, top_left_x, top_left_y, requireAvaiable=True):
+		if requireAvaiable and not piece in piece.player.available_pieces:
 			return False
 
 		touchesCorner = False
 		for y in range(piece.height):
 			for x in range(piece.width):
 				if piece.tiles[y][x] == 1:
-					if self._doesTouchCorner(piece, top_left_x+x, top_left_y+y):
-						touchesCorner = True
 					if not self._canPlaceTile(piece, top_left_x+x, top_left_y+y):
 						return False
+					if self._doesTouchCorner(piece, top_left_x+x, top_left_y+y):
+						touchesCorner = True
 		return touchesCorner
 
 	def _doesTouchCorner(self, piece, x, y):
