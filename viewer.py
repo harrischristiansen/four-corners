@@ -26,6 +26,11 @@ ACTION_BTN_WIDTH = 120
 ABOVE_GRID_HEIGHT = ACTIONBAR_ROW_HEIGHT
 MAX_TILE_SIZE = 12
 
+# Event Keybindings
+ROTATE_LEFT_EVENTS = [pygame.K_a, pygame.K_l, pygame.K_LEFT]
+ROTATE_RIGHT_EVENTS = [pygame.K_d, pygame.K_r, pygame.K_RIGHT]
+FLIP_PIECE_EVENTS = [pygame.K_w, pygame.K_s, pygame.K_f, pygame.K_UP, pygame.K_DOWN]
+
 class FourCornersViewer(object):
 	def __init__(self, name=None, moveEvent=None):
 		self.selected_piece = None
@@ -50,6 +55,13 @@ class FourCornersViewer(object):
 					self._handleClick(pygame.mouse.get_pos())
 				elif event.type == pygame.MOUSEMOTION: # Mouse Hover
 					self._handleHover(pygame.mouse.get_pos())
+				elif event.type == pygame.KEYDOWN:
+					if event.key in ROTATE_LEFT_EVENTS:
+						self._rotatePiecesLeft()
+					elif event.key in ROTATE_RIGHT_EVENTS:
+						self._rotatePiecesRight()
+					elif event.key in FLIP_PIECE_EVENTS:
+						self._flipPieces()
 
 			if self._receivedUpdate:
 				self._drawViewer()
@@ -95,15 +107,11 @@ class FourCornersViewer(object):
 		self._receivedUpdate = True
 		if pos[1] < ACTIONBAR_ROW_HEIGHT:
 			if pos[0] < ACTION_BTN_WIDTH: # Rotate Left
-				for piece in self._board.availablePieces:
-					piece.rotate()
+				self._rotatePiecesLeft()
 			elif pos[0] < 2*ACTION_BTN_WIDTH: # Rotate Right
-				for piece in self._board.availablePieces:
-					piece.rotate(-1)
+				self._rotatePiecesRight()
 			elif pos[0] < 3*ACTION_BTN_WIDTH: # Flip
-				for piece in self._board.availablePieces:
-					piece.flip()
-			self._receivedUpdate = True
+				self._flipPieces()
 		elif pos[1] > ABOVE_GRID_HEIGHT and pos[1] < self._window_size[1] - PIECES_ROW_HEIGHT: # Click inside Grid
 			grid_pos = self._transMouseToGridPos(pos)
 			self._moveEvent(self.selected_piece, grid_pos[0], grid_pos[1])
@@ -123,6 +131,23 @@ class FourCornersViewer(object):
 		if pos[1] >= ABOVE_GRID_HEIGHT and pos[1] <= self._window_size[1] - PIECES_ROW_HEIGHT: # Click inside Grid
 			return (pos[0] // (CELL_WIDTH + CELL_MARGIN), (pos[1] - ABOVE_GRID_HEIGHT) // (CELL_HEIGHT + CELL_MARGIN))
 		return (0,0)
+
+	''' ======================== Game Actions ======================== '''
+
+	def _rotatePiecesLeft(self):
+		for piece in self._board.availablePieces:
+			piece.rotate()
+		self._receivedUpdate = True
+
+	def _rotatePiecesRight(self):
+		for piece in self._board.availablePieces:
+			piece.rotate(-1)
+		self._receivedUpdate = True
+
+	def _flipPieces(self):
+		for piece in self._board.availablePieces:
+			piece.flip()
+		self._receivedUpdate = True
 
 	''' ======================== Handle Hover Preview ======================== '''
 
@@ -169,15 +194,15 @@ class FourCornersViewer(object):
 	def _drawActionbar(self):
 		# Rotate Left Button
 		pygame.draw.rect(self._screen, PLAYER_COLORS[4], [0, 0, ACTION_BTN_WIDTH, ACTIONBAR_ROW_HEIGHT])
-		self._screen.blit(self._font.render("Rotate CC", True, WHITE), (10, 5))
+		self._screen.blit(self._font.render("Rotate CC (L)", True, WHITE), (10, 5))
 
 		# Rotate Right Button
 		pygame.draw.rect(self._screen, PLAYER_COLORS[5], [ACTION_BTN_WIDTH, 0, ACTION_BTN_WIDTH, ACTIONBAR_ROW_HEIGHT])
-		self._screen.blit(self._font.render("Rotate Clockwise", True, WHITE), (ACTION_BTN_WIDTH+10, 5))
+		self._screen.blit(self._font.render("Rotate Clockwise (R)", True, WHITE), (ACTION_BTN_WIDTH+10, 5))
 
 		# Flip Button
 		pygame.draw.rect(self._screen, PLAYER_COLORS[3], [ACTION_BTN_WIDTH*2, 0, ACTION_BTN_WIDTH, ACTIONBAR_ROW_HEIGHT])
-		self._screen.blit(self._font.render("Flip", True, WHITE), (ACTION_BTN_WIDTH*2+10, 5))
+		self._screen.blit(self._font.render("Flip (F)", True, WHITE), (ACTION_BTN_WIDTH*2+10, 5))
 
 	def _drawAvailablePieces(self):
 		pos_top = self._window_size[1] - PIECES_ROW_HEIGHT
