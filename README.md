@@ -23,4 +23,4 @@ Four Corners is a game where four players strategically place game pieces on the
 
 ## Contributors
 
-@harrischristiansen [HarrisChristiansen.com](http://www.harrischristiansen.com) (harris@harrischristiansen.com)  
+@harrischristiansen [HarrisChristiansen.com](http://www.harrischristiansen.com) (code@harrischristiansen.com)  
